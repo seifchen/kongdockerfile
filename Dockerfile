@@ -1,7 +1,7 @@
 from centos:7
 MAINTAINER  chenxuefeng<chenxuefeng1@guazi.com>
 
-ENV KONG_VERSION=1.1.1 \ 
+ENV KONG_VERSION=1.2.0 \ 
     PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/usr/local/openresty/bin \
     OPENSSL_DIR=/usr/local/openssl 
 
