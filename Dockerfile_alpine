@@ -84,11 +84,6 @@ RUN cd /tmp \
     && if [ -n "${RESTY_EVAL_PRE_CONFIGURE}" ]; then eval $(echo ${RESTY_EVAL_PRE_CONFIGURE}); fi \
     && curl -fSL https://www.openssl.org/source/openssl-${RESTY_OPENSSL_VERSION}.tar.gz -o openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
     && tar xzf openssl-${RESTY_OPENSSL_VERSION}.tar.gz  \
-    && cd openssl-${RESTY_OPENSSL_VERSION} \
-    &&  ./config --prefix=/usr/local/openssl enable-shared \
-    && make && make install && make clean &&  cd /tmp \
-    && ln -s /usr/local/openssl/bin/openssl  /usr/bin/openssl \ 
-    && echo /usr/local/openssl/lib >> /etc/ld.so.conf.d/openssl.conf && ldconfig /etc/ld.so.conf \
     && curl -fSL https://ftp.pcre.org/pub/pcre/pcre-${RESTY_PCRE_VERSION}.tar.gz -o pcre-${RESTY_PCRE_VERSION}.tar.gz \
     && tar xzf pcre-${RESTY_PCRE_VERSION}.tar.gz \
     && curl -fSL https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz -o openresty-${RESTY_VERSION}.tar.gz \
