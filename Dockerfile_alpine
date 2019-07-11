@@ -73,7 +73,6 @@ RUN apk add --no-cache --virtual .build-deps \
         readline-dev \
         zlib-dev \
         ${RESTY_ADD_PACKAGE_BUILDDEPS} \
-    && apk add --no-cache \
         gd \
         geoip \
         libgcc \
@@ -102,21 +101,14 @@ RUN cd /tmp \
     && make -j${RESTY_J} \
     && make -j${RESTY_J} install \
     && cd /tmp \
-    && if [ -n "${RESTY_EVAL_POST_MAKE}" ]; then eval $(echo ${RESTY_EVAL_POST_MAKE}); fi \
-    && rm -rf \
-        openssl-${RESTY_OPENSSL_VERSION} \
-        openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
-        openresty-${RESTY_VERSION}.tar.gz openresty-${RESTY_VERSION} \
-        pcre-${RESTY_PCRE_VERSION}.tar.gz pcre-${RESTY_PCRE_VERSION} 
+    && if [ -n "${RESTY_EVAL_POST_MAKE}" ]; then eval $(echo ${RESTY_EVAL_POST_MAKE}); fi 
 
-ENV KONG_VERSION=1.2.1 \
+ENV KONG_VERSION=1.2.1-0 \
     PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/usr/local/openresty/bin 
 ARG KONG_URL=https://github.com/Kong/kong/archive/${KONG_VERSION}.tar.gz
 
 ADD kong /usr/local/bin/
 ADD docker-entrypoint.sh /
-
-
 
 ENV LUA_PATH="/usr/local/openresty/site/lualib/?.ljbc;/usr/local/openresty/site/lualib/?/init.ljbc;/usr/local/openresty/lualib/?.ljbc;/usr/local/openresty/lualib/?/init.ljbc;/usr/local/openresty/site/lualib/?.lua;/usr/local/openresty/site/lualib/?/init.lua;/usr/local/openresty/lualib/?.lua;/usr/local/openresty/lualib/?/init.lua;./?.lua;/usr/local/openresty/luajit/share/luajit-2.1.0-beta3/?.lua;/usr/local/share/lua/5.1/?.lua;/usr/local/share/lua/5.1/?/init.lua;/usr/local/openresty/luajit/share/lua/5.1/?.lua;/usr/local/openresty/luajit/share/lua/5.1/?/init.lua"
 
@@ -125,10 +117,17 @@ ENV LUA_CPATH="/usr/local/openresty/site/lualib/?.so;/usr/local/openresty/lualib
 
 ARG RESTY_LUAROCKS_VERSION="3.1.3"
 
-RUN apk add --no-cache \
+RUN apk add --no-cache --virtual .build-deps \
+        perl-dev \
+    && apk add --no-cache \
         bash \
+        build-base \
+        curl \
+        linux-headers \
+        make \
         outils-md5 \
-        unzip make \
+        perl \
+        unzip \
     && cd /tmp \
     && curl -fSL https://luarocks.github.io/luarocks/releases/luarocks-${RESTY_LUAROCKS_VERSION}.tar.gz -o luarocks-${RESTY_LUAROCKS_VERSION}.tar.gz \
     && tar xzf luarocks-${RESTY_LUAROCKS_VERSION}.tar.gz \
@@ -136,12 +135,10 @@ RUN apk add --no-cache \
     && ./configure \
         --prefix=/usr/local/openresty/luajit \
         --with-lua=/usr/local/openresty/luajit \
-        --lua-suffix=jit-2.1.0-beta3 \
+        --lua-suffix=jit \
         --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1 \
-    && make build \
-    && make install \
+    && make build && make install \
     && cd /tmp \
-    && rm -rf luarocks-${RESTY_LUAROCKS_VERSION} luarocks-${RESTY_LUAROCKS_VERSION}.tar.gz \
     && apk add --no-cache --virtual .gettext gettext \
     && mv /usr/bin/envsubst /tmp/ \
     && runDeps="$( \
@@ -152,24 +149,24 @@ RUN apk add --no-cache \
             | sort -u \
     )" \
     && apk add --no-cache --virtual $runDeps \
-    && apk del .build-deps .gettext \
     && mv /tmp/envsubst /usr/local/bin/
 
 
 
-#RUN apk add unzip && wget -c  "${LUA_ROCKS_URL}" -O -| tar -C /tmp -zx \
-#    && cd /tmp/luarocks-${LUA_ROCKS_VERSION} \
-#    && ./configure --prefix=/usr/local/openresty/luajit --with-lua=/usr/local/openresty/luajit/ --lua-suffix=jit --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1 \
-#     && make build && make install && make clean && ln -s /usr/local/openresty/luajit/bin/luarocks /usr/bin/luarocks 
-RUN  apk add lua && wget -c "${KONG_URL}" -O -| tar -C /tmp -zx  \
-    && cd /tmp/kong-${KONG_VERSION} && make install  &&  cd /tmp \
+RUN  apk add lua && luarocks install kong ${KONG_VERSION} \
+RUN adduser -Su 1337 kong \ 
     && unlink /etc/localtime && ln -s /usr/share/zoneinfo/Etc/GMT-8 /etc/localtime \
     && mkdir -p /usr/local/kong \
     && apk del make gcc git   wget  patch  \
     && chmod +x /docker-entrypoint.sh  \
-    && chmod +x /usr/local/bin/kong 
-
-RUN  adduser -Su 1337 kong 
+    && chmod +x /usr/local/bin/kong \
+    && cd /tmp && rm -rf \
+        openssl-${RESTY_OPENSSL_VERSION} \
+        openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
+        openresty-${RESTY_VERSION}.tar.gz openresty-${RESTY_VERSION} \
+        pcre-${RESTY_PCRE_VERSION}.tar.gz pcre-${RESTY_PCRE_VERSION} \
+        luarocks-${RESTY_LUAROCKS_VERSION}.tar.gz luarocks-${RESTY_LUAROCKS_VERSION} \ 
+        && apk del .build-deps .gettext \ 
 
 EXPOSE 8000 8443 8001 8444
 
