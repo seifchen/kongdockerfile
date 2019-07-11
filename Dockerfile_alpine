@@ -5,7 +5,8 @@ LABEL maintainer="chenxuefeng<chenxuefeng1@guazi.com"
 ARG RESTY_IMAGE_BASE="alpine"
 ARG RESTY_IMAGE_TAG="3.9"
 ARG RESTY_VERSION="1.15.8.1"
-ARG RESTY_OPENSSL_VERSION="1.1.1c"
+ARG RESTY_OPENSSL_VERSION="1.1.1b"
+ARG KONG_OPENSSL_VESION="1.1.1b-r1"
 ARG RESTY_PCRE_VERSION="8.42"
 ARG RESTY_J="1"
 ARG RESTY_CONFIG_OPTIONS="\
@@ -56,7 +57,7 @@ LABEL resty_add_package_rundeps="${RESTY_ADD_PACKAGE_RUNDEPS}"
 LABEL resty_eval_pre_configure="${RESTY_EVAL_PRE_CONFIGURE}"
 LABEL resty_eval_post_make="${RESTY_EVAL_POST_MAKE}"
 
-ARG _RESTY_CONFIG_DEPS="--with-cc-opt="-I/usr/local/openssl/include" --with-ld-opt="-L/usr/local/openssl/lib" --with-pcre=/tmp/pcre-${RESTY_PCRE_VERSION}"
+ARG _RESTY_CONFIG_DEPS="--with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION}  --with-pcre=/tmp/pcre-${RESTY_PCRE_VERSION}"
 
 
 RUN apk add --no-cache --virtual .build-deps \
@@ -155,7 +156,7 @@ RUN apk add --no-cache --virtual .build-deps \
 
 
 
-RUN  apk add lua bsd-compat-headers m4 yaml-dev && luarocks install kong  ${KONG_VERSION} OPENSSL_DIR=/usr/local/openssl CRYPTO_DIR=/usr/local/openssl\
+RUN  apk add git openssl-dev=${KONG_OPENSSL_VESION} bsd-compat-headers m4 yaml-dev && luarocks install kong  ${KONG_VERSION} \
 RUN adduser -Su 1337 kong \ 
     && unlink /etc/localtime && ln -s /usr/share/zoneinfo/Etc/GMT-8 /etc/localtime \
     && mkdir -p /usr/local/kong \
