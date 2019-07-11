@@ -153,7 +153,7 @@ RUN apk add --no-cache --virtual .build-deps \
 
 
 
-RUN  apk add lua && luarocks install kong ${KONG_VERSION} \
+RUN  apk add lua && luarocks install ${KONG_VERSION} \
 RUN adduser -Su 1337 kong \ 
     && unlink /etc/localtime && ln -s /usr/share/zoneinfo/Etc/GMT-8 /etc/localtime \
     && mkdir -p /usr/local/kong \
