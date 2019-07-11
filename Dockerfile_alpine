@@ -56,7 +56,7 @@ LABEL resty_add_package_rundeps="${RESTY_ADD_PACKAGE_RUNDEPS}"
 LABEL resty_eval_pre_configure="${RESTY_EVAL_PRE_CONFIGURE}"
 LABEL resty_eval_post_make="${RESTY_EVAL_POST_MAKE}"
 
-ARG _RESTY_CONFIG_DEPS="--with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} --with-pcre=/tmp/pcre-${RESTY_PCRE_VERSION}"
+ARG _RESTY_CONFIG_DEPS="--with-cc-opt="-I/usr/local/openssl/include" --with-ld-opt="-L/usr/local/openssl/lib" --with-pcre=/tmp/pcre-${RESTY_PCRE_VERSION}"
 
 
 RUN apk add --no-cache --virtual .build-deps \
@@ -83,6 +83,11 @@ RUN cd /tmp \
     && if [ -n "${RESTY_EVAL_PRE_CONFIGURE}" ]; then eval $(echo ${RESTY_EVAL_PRE_CONFIGURE}); fi \
     && curl -fSL https://www.openssl.org/source/openssl-${RESTY_OPENSSL_VERSION}.tar.gz -o openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
     && tar xzf openssl-${RESTY_OPENSSL_VERSION}.tar.gz  \
+    && cd openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
+    &&  ./config --prefix=/usr/local/openssl enable-shared \
+    && make && make install && make clean &&  cd /tmp \
+    && ln -s /usr/local/openssl/bin/openssl  /usr/bin/openssl \ 
+    && echo /usr/local/openssl/lib >> /etc/ld.so.conf.d/openssl.conf && ldconfig /etc/ld.so.conf \
     && curl -fSL https://ftp.pcre.org/pub/pcre/pcre-${RESTY_PCRE_VERSION}.tar.gz -o pcre-${RESTY_PCRE_VERSION}.tar.gz \
     && tar xzf pcre-${RESTY_PCRE_VERSION}.tar.gz \
     && curl -fSL https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz -o openresty-${RESTY_VERSION}.tar.gz \
@@ -103,7 +108,6 @@ RUN cd /tmp \
 
 ENV KONG_VERSION=1.2.1-0 \
     PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/usr/local/openresty/bin 
-ARG KONG_URL=https://github.com/Kong/kong/archive/${KONG_VERSION}.tar.gz
 
 ADD kong /usr/local/bin/
 ADD docker-entrypoint.sh /
@@ -151,7 +155,7 @@ RUN apk add --no-cache --virtual .build-deps \
 
 
 
-RUN  apk add lua && luarocks install ${KONG_VERSION} \
+RUN  apk add lua bsd-compat-headers m4 yaml-dev && luarocks install kong  ${KONG_VERSION} OPENSSL_DIR=/usr/local/openssl CRYPTO_DIR=/usr/local/openssl\
 RUN adduser -Su 1337 kong \ 
     && unlink /etc/localtime && ln -s /usr/share/zoneinfo/Etc/GMT-8 /etc/localtime \
     && mkdir -p /usr/local/kong \
