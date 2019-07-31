@@ -44,6 +44,9 @@ ARG RESTY_ADD_PACKAGE_BUILDDEPS=""
 ARG RESTY_ADD_PACKAGE_RUNDEPS=""
 ARG RESTY_EVAL_PRE_CONFIGURE=""
 ARG RESTY_EVAL_POST_MAKE=""
+ARG RESTY_LUAROCKS_VERSION="3.1.3"
+ARG KONG_VERSION="1.2.1"
+ARG KONG_URL=https://github.com/Kong/kong/archive/${KONG_VERSION}.tar.gz
 
 LABEL resty_image_base="${RESTY_IMAGE_BASE}"
 LABEL resty_image_tag="${RESTY_IMAGE_TAG}"
@@ -59,16 +62,25 @@ LABEL resty_eval_post_make="${RESTY_EVAL_POST_MAKE}"
 
 ARG _RESTY_CONFIG_DEPS="--with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION}  --with-pcre=/tmp/pcre-${RESTY_PCRE_VERSION}"
 
+ARG OPENRESTY_PATCHS_URL=https://github.com/Kong/openresty-patches/archive/master.tar.gz
 
-RUN apk add --no-cache --virtual .build-deps \
+
+ENV PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/usr/local/openresty/bin 
+
+ADD kong /usr/local/bin/
+ADD docker-entrypoint.sh /
+
+
+RUN apk update && apk  add --no-cache --virtual .build-deps \
         build-base coreutils curl git \
         gd-dev geoip-dev libxslt-dev linux-headers \
         make perl-dev readline-dev zlib-dev \
         ${RESTY_ADD_PACKAGE_BUILDDEPS} gd geoip libgcc \
         libxslt zlib ${RESTY_ADD_PACKAGE_RUNDEPS}  bash \
         outils-md5 perl unzip openssl-dev=${KONG_OPENSSL_VESION} \
-        bsd-compat-headers m4 yaml-dev
-RUN cd /tmp \
+        bsd-compat-headers m4 yaml-dev \ 
+        tzdata su-exec \
+    && cd /tmp \
     && if [ -n "${RESTY_EVAL_PRE_CONFIGURE}" ]; then eval $(echo ${RESTY_EVAL_PRE_CONFIGURE}); fi \
     && curl -fSL https://www.openssl.org/source/openssl-${RESTY_OPENSSL_VERSION}.tar.gz -o openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
     && tar xzf openssl-${RESTY_OPENSSL_VERSION}.tar.gz  \
@@ -76,34 +88,23 @@ RUN cd /tmp \
     && tar xzf pcre-${RESTY_PCRE_VERSION}.tar.gz \
     && curl -fSL https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz -o openresty-${RESTY_VERSION}.tar.gz \
     && tar xzf openresty-${RESTY_VERSION}.tar.gz \
-    && cd /tmp/openresty-${RESTY_VERSION} \
-    && if [[ "1.1.1" == $(echo -e "${RESTY_OPENSSL_VERSION}\n1.1.1" | sort -V | head -n1) ]] ; then \
-        echo 'patching Nginx for OpenSSL 1.1.1' \
-        && cd bundle/nginx-1.15.8 \
-        && curl -s https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.15.8-ssl_cert_cb_yield.patch | patch -p1 \
-        && curl -s https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.15.8-ssl_sess_cb_yield.patch | patch -p1 \
-        && cd ../.. ; \
-    fi \
+   # && if [[ "1.1.1" == $(echo -e "${RESTY_OPENSSL_VERSION}\n1.1.1" | sort -V | head -n1) ]] ; then \
+    #    echo 'patching Nginx for OpenSSL 1.1.1' \
+    #    && cd bundle/nginx-1.13.6 \
+    #    && curl -s https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.13.6-ssl_cert_cb_yield.patch | patch -p1 \
+    #    && curl -s https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.13.6-ssl_sess_cb_yield.patch | patch -p1 \
+    #    && cd ../.. ; \
+    #fi \
+    && wget -c "${OPENRESTY_PATCHS_URL}" -O -| tar -C /tmp -zx  \
+    && cd "/tmp/openresty-${RESTY_VERSION}"/bundle/ \
+    && for i in /tmp/openresty-patches-master/patches/${RESTY_VERSION}/*.patch; do patch -p1 < $i; done \
+    && cd "/tmp/openresty-${RESTY_VERSION}" \
     && ./configure -j${RESTY_J} ${_RESTY_CONFIG_DEPS} ${RESTY_CONFIG_OPTIONS} ${RESTY_CONFIG_OPTIONS_MORE} \
     && make -j${RESTY_J} \
     && make -j${RESTY_J} install \
     && cd /tmp \
-    && if [ -n "${RESTY_EVAL_POST_MAKE}" ]; then eval $(echo ${RESTY_EVAL_POST_MAKE}); fi 
-
-ARGS  KONG_VERSION=1.2.1-0 \
-ENV PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/usr/local/openresty/bin 
-
-ADD kong /usr/local/bin/
-ADD docker-entrypoint.sh /
-
-ENV LUA_PATH="/usr/local/openresty/site/lualib/?.ljbc;/usr/local/openresty/site/lualib/?/init.ljbc;/usr/local/openresty/lualib/?.ljbc;/usr/local/openresty/lualib/?/init.ljbc;/usr/local/openresty/site/lualib/?.lua;/usr/local/openresty/site/lualib/?/init.lua;/usr/local/openresty/lualib/?.lua;/usr/local/openresty/lualib/?/init.lua;./?.lua;/usr/local/openresty/luajit/share/luajit-2.1.0-beta3/?.lua;/usr/local/share/lua/5.1/?.lua;/usr/local/share/lua/5.1/?/init.lua;/usr/local/openresty/luajit/share/lua/5.1/?.lua;/usr/local/openresty/luajit/share/lua/5.1/?/init.lua"
-
-ENV LUA_CPATH="/usr/local/openresty/site/lualib/?.so;/usr/local/openresty/lualib/?.so;./?.so;/usr/local/lib/lua/5.1/?.so;/usr/local/openresty/luajit/lib/lua/5.1/?.so;/usr/local/lib/lua/5.1/loadall.so;/usr/local/openresty/luajit/lib/lua/5.1/?.so"
-
-# build luarocks
-ARG RESTY_LUAROCKS_VERSION="3.1.3"
-
-RUN cd /tmp \
+    && if [ -n "${RESTY_EVAL_POST_MAKE}" ]; then eval $(echo ${RESTY_EVAL_POST_MAKE}); fi \
+    && cd /tmp \
     && curl -fSL https://luarocks.github.io/luarocks/releases/luarocks-${RESTY_LUAROCKS_VERSION}.tar.gz -o luarocks-${RESTY_LUAROCKS_VERSION}.tar.gz \
     && tar xzf luarocks-${RESTY_LUAROCKS_VERSION}.tar.gz \
     && cd luarocks-${RESTY_LUAROCKS_VERSION} \
@@ -124,24 +125,17 @@ RUN cd /tmp \
             | sort -u \
     )" \
     && apk add --no-cache --virtual $runDeps \
-    && mv /tmp/envsubst /usr/local/bin/
-
-RUN  luarocks install kong  ${KONG_VERSION}
-RUN adduser -Su 1337 kong \ 
-    && apk add tzdata \
+    && mv /tmp/envsubst /usr/local/bin/ \
+    && wget  -c "${KONG_URL}" -O -| tar -C /tmp -zx  \
+    && cd /tmp/kong-${KONG_VERSION} && make install  &&  cd /tmp \
+    && adduser -Su 1337 kong \ 
     && ln -s /usr/share/zoneinfo/Etc/GMT-8 /etc/localtime \
     && echo "Asia/Shanghai" >  /etc/timezone \
     && mkdir -p /usr/local/kong \
     && chmod +x /docker-entrypoint.sh  \
     && chmod +x /usr/local/bin/kong \
-    && cd /tmp && rm -rf \
-        openssl-${RESTY_OPENSSL_VERSION} \
-        openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
-        openresty-${RESTY_VERSION}.tar.gz openresty-${RESTY_VERSION} \
-        pcre-${RESTY_PCRE_VERSION}.tar.gz pcre-${RESTY_PCRE_VERSION} \
-        luarocks-${RESTY_LUAROCKS_VERSION}.tar.gz luarocks-${RESTY_LUAROCKS_VERSION} 
-
-RUN apk del make gcc git   wget  patch  unzip .build-deps .gettext tzdata\ 
+    && cd /tmp && rm -rf * \ 
+    && apk del .build-deps build-base make gcc git  wget  patch  unzip .gettext tzdata
 
 EXPOSE 8000 8443 8001 8444
 

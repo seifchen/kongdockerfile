@@ -59,6 +59,8 @@ RUN  useradd --uid 1337 kong \
     --add-module=/tmp/lua-kong-nginx-module \
     -j2 \
     && make -j2 && make install && make clean\
+    && cd /tmp/lua-kong-nginx-module \
+    && make install LUA_LIB_DIR=/usr/local/openresty/lualib/ \
     && cd /tmp/luarocks-${LUA_ROCKS_VERSION} \
     && ./configure --prefix=/usr/local/openresty/luajit --with-lua=/usr/local/openresty/luajit/ --lua-suffix=jit --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1 \
     && make build && make install && make clean && ln -s /usr/local/openresty/luajit/bin/luarocks /usr/bin/luarocks\
