@@ -1,16 +1,16 @@
 from centos:7
 MAINTAINER  chenxuefeng<chenxuefeng1@guazi.com>
 
-ENV KONG_VERSION=1.2.0 \ 
+ENV KONG_VERSION=1.3.0 \ 
     PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/usr/local/openresty/bin \
     OPENSSL_DIR=/usr/local/openssl 
 
 ARG KONG_URL=https://github.com/Kong/kong/archive/${KONG_VERSION}.tar.gz
 
-ARG LUA_ROCKS_VERSION=3.0.4
+ARG LUA_ROCKS_VERSION=3.1.3
 ARG LUA_ROCKS_URL=https://luarocks.org/releases/luarocks-${LUA_ROCKS_VERSION}.tar.gz
 
-ARG OPENRESTY_VERSION=1.13.6.2
+ARG OPENRESTY_VERSION=1.15.8.1
 ARG OPENRESTY_URL=https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz
 
 ARG OPENRESTY_PATCHS_URL=https://github.com/Kong/openresty-patches/archive/master.tar.gz
@@ -20,6 +20,8 @@ ARG OPENSSL_URL=https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
 
 ARG SU_EXEC_VERSION=0.2
 ARG SU_EXEC_URL="https://github.com/ncopa/su-exec/archive/v${SU_EXEC_VERSION}.tar.gz"
+
+ARG LUA_KONG_NGINX_MODUEL_URL="https://github.com/Kong/lua-kong-nginx-module.git"
 
 
 ADD kong /usr/local/bin/
@@ -44,9 +46,22 @@ RUN  useradd --uid 1337 kong \
     && echo /usr/local/openssl/lib >> /etc/ld.so.conf.d/openssl.conf && ldconfig /etc/ld.so.conf \
     && cd "openresty-${OPENRESTY_VERSION}"/bundle/ \
     && for i in ../../openresty-patches-master/patches/${OPENRESTY_VERSION}/*.patch; do patch -p1 < $i; done \
+    && cd /tmp && git clone ${LUA_KONG_NGINX_MODUEL_URL} \
     && cd /tmp/openresty-${OPENRESTY_VERSION} \
-    &&  ./configure --with-pcre-jit  --with-http_ssl_module --with-http_realip_module  --with-http_stub_status_module --with-http_v2_module  --with-cc-opt="-I/usr/local/openssl/include" --with-ld-opt="-L/usr/local/openssl/lib"  -j2 \
+    &&  ./configure \
+    --with-pcre-jit  \
+    --with-stream_realip_module \
+    --with-http_ssl_module \
+    --with-http_realip_module  \
+    --with-http_stub_status_module \
+    --with-http_v2_module  \
+    --with-cc-opt="-I/usr/local/openssl/include" \
+    --with-ld-opt="-L/usr/local/openssl/lib"  \
+    --add-module=/tmp/lua-kong-nginx-module \
+    -j2 \
     && make -j2 && make install && make clean\
+    && cd /tmp/lua-kong-nginx-module \
+    && make install LUA_LIB_DIR=/usr/local/openresty/lualib/ \
     && cd /tmp/luarocks-${LUA_ROCKS_VERSION} \
     && ./configure --prefix=/usr/local/openresty/luajit --with-lua=/usr/local/openresty/luajit/ --lua-suffix=jit --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1 \
     && make build && make install && make clean && ln -s /usr/local/openresty/luajit/bin/luarocks /usr/bin/luarocks\
