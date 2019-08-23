@@ -24,7 +24,6 @@ ARG SU_EXEC_URL="https://github.com/ncopa/su-exec/archive/v${SU_EXEC_VERSION}.ta
 ARG LUA_KONG_NGINX_MODUEL_URL="https://github.com/Kong/lua-kong-nginx-module.git"
 
 
-ADD kong /usr/local/bin/
 ADD docker-entrypoint.sh /
 
 RUN  useradd --uid 1337 kong \
@@ -63,9 +62,9 @@ RUN  useradd --uid 1337 kong \
     && cd /tmp/lua-kong-nginx-module \
     && make install LUA_LIB_DIR=/usr/local/openresty/lualib/ \
     && cd /tmp/luarocks-${LUA_ROCKS_VERSION} \
-    && ./configure --prefix=/usr/local/openresty/luajit --with-lua=/usr/local/openresty/luajit/ --lua-suffix=jit --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1 \
-    && make build && make install && make clean && ln -s /usr/local/openresty/luajit/bin/luarocks /usr/bin/luarocks\
-    && cd /tmp/kong-${KONG_VERSION} && make install  &&  cd /tmp \
+    && ./configure --prefix=/usr/local --with-lua=/usr/local/openresty/luajit/ --lua-suffix=jit --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1 \
+    && make build && make install && make clean \
+    && cd /tmp/kong-${KONG_VERSION} && make install  && mv bin/kong /usr/local/bin/kong && cd /tmp \
     && unlink /etc/localtime && ln -s /usr/share/zoneinfo/Etc/GMT-8 /etc/localtime \
     && mkdir -p /usr/local/kong \
     && yum autoremove -y -q make gcc git   wget  patch  \
