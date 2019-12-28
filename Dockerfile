@@ -1,9 +1,9 @@
-from centos:7
+From centos:7
 MAINTAINER  chenxuefeng<chenxuefeng1@guazi.com>
 
-ENV KONG_VERSION=1.3.0 \ 
+ENV KONG_VERSION=1.4.0 \
     PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/usr/local/openresty/bin \
-    OPENSSL_DIR=/usr/local/openssl 
+    OPENSSL_DIR=/usr/local/openssl
 
 ARG KONG_URL=https://github.com/Kong/kong/archive/${KONG_VERSION}.tar.gz
 
@@ -81,6 +81,3 @@ STOPSIGNAL SIGTERM
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["kong", "docker-start"]
-
-
-  
