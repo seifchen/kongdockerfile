@@ -1,7 +1,7 @@
 From centos:7
 MAINTAINER  chenxuefeng<chenxuefeng1@guazi.com>
 
-ENV KONG_VERSION=1.4.0 \
+ENV KONG_VERSION=1.4.2 \
     PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/usr/local/openresty/bin \
     OPENSSL_DIR=/usr/local/openssl
 
@@ -73,6 +73,8 @@ RUN  useradd --uid 1337 kong \
     && chmod +x /usr/local/bin/kong \
     && rm -rf /usr/local/openssl/share/doc/* && rm -rf /usr/local/openssl/share/man/* \
     && rm -fr /var/cache/yum/* /tmp/* /root/.pki 
+
+COPY handler.lua /usr/local/share/lua/5.1/kong/plugins/proxy-cache/handler.lua
 
 
 EXPOSE 8000 8443 8001 8444
