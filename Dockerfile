@@ -31,9 +31,7 @@ ARG KONG_GO_PLUGINSERVER_VERSION=master
 ENV GOPATH=/tmp/go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
-RUN curl -o /etc/yum.repos.d/CentOS-Base.repo  http://mirrors.aliyun.com/repo/Centos-7.repo \
-    && yum clean all && yum makecache \
-    && yum update -y && yum install -y  gcc  git m4  make  libyaml-devel wget  pcre-devel  patch zlib-devel libtool unzip perl perl-Data-Dumper \
+RUN yum update -y && yum install -y  gcc  git m4  make  libyaml-devel wget  pcre-devel  patch zlib-devel libtool unzip perl perl-Data-Dumper \
     && curl -fsSLo go.tgz "https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz" \
     && tar -C /usr/local -xzf go.tgz \
     && rm go.tgz \
