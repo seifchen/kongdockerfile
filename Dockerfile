@@ -1,7 +1,7 @@
 From centos:7
 MAINTAINER  chenxuefeng<chenxuefeng1@guazi.com>
 
-ENV KONG_VERSION=1.4.2 \
+ENV KONG_VERSION=2.0.1 \
     PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/usr/local/openresty/bin \
     OPENSSL_DIR=/usr/local/openssl
 
@@ -10,7 +10,7 @@ ARG KONG_URL=https://github.com/Kong/kong/archive/${KONG_VERSION}.tar.gz
 ARG LUA_ROCKS_VERSION=3.1.3
 ARG LUA_ROCKS_URL=https://luarocks.org/releases/luarocks-${LUA_ROCKS_VERSION}.tar.gz
 
-ARG OPENRESTY_VERSION=1.15.8.1
+ARG OPENRESTY_VERSION=1.15.8.2
 ARG OPENRESTY_URL=https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz
 
 ARG OPENRESTY_PATCHS_URL=https://github.com/Kong/openresty-patches/archive/master.tar.gz
@@ -25,6 +25,29 @@ ARG LUA_KONG_NGINX_MODUEL_URL="https://github.com/Kong/lua-kong-nginx-module.git
 
 
 ADD docker-entrypoint.sh /
+
+ARG GOLANG_VERSION=1.13.7
+ARG KONG_GO_PLUGINSERVER_VERSION=master
+ENV GOPATH=/tmp/go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+
+RUN set -eux; \
+    url="https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz"; \
+    curl -fsSLo go.tgz "$url"; \
+    tar -C /usr/local -xzf go.tgz; \
+    rm go.tgz; \
+    export PATH="$PATH:/usr/local/go/bin"; \
+    go version; \
+    mkdir -p /tmp/go/src/github.com/kong/ \
+    && git clone --branch ${KONG_GO_PLUGINSERVER_VERSION} https://github.com/Kong/go-pluginserver.git /tmp/go/src/github.com/kong/go-pluginserver \
+    && cd /tmp/go/src/github.com/kong/go-pluginserver \
+    && go mod tidy; \
+    set -eux; \
+	&& cd /tmp/go/src/github.com/kong/go-pluginserver \
+    && make build GOARCH=$dpkgArch GOOS=linux \
+    && mkdir -p /tmp/build/usr/local/bin/ \
+    && mv go-pluginserver /tmp/build/usr/local/bin/
+
 
 RUN  useradd --uid 1337 kong \
     && curl -o /etc/yum.repos.d/CentOS-Base.repo  http://mirrors.aliyun.com/repo/Centos-7.repo \
