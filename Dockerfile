@@ -95,8 +95,6 @@ RUN  useradd --uid 1337 kong \
     && rm -rf /usr/local/openssl/share/doc/* && rm -rf /usr/local/openssl/share/man/* \
     && rm -fr /var/cache/yum/* /tmp/* /root/.pki 
 
-COPY handler.lua /usr/local/share/lua/5.1/kong/plugins/proxy-cache/handler.lua
-
 
 EXPOSE 8000 8443 8001 8444
 
