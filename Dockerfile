@@ -43,7 +43,7 @@ RUN set -eux; \
     && cd /tmp/go/src/github.com/kong/go-pluginserver \
     && go mod tidy \
 	&& cd /tmp/go/src/github.com/kong/go-pluginserver \
-    && make build GOARCH=$dpkgArch GOOS=linux \
+    && make build GOARCH=amd64 GOOS=linux \
     && mkdir -p /tmp/build/usr/local/bin/ \
     && mv go-pluginserver /tmp/build/usr/local/bin/
 
