@@ -3,7 +3,9 @@ MAINTAINER  chenxuefeng<chenxuefeng1@guazi.com>
 
 ENV KONG_VERSION=2.0.1 \
     PATH=$PATH:/usr/local/openresty/luajit/bin:/usr/local/openresty/nginx/sbin:/usr/local/openresty/bin \
-    OPENSSL_DIR=/usr/local/openssl
+    OPENSSL_DIR=/usr/local/openssl \
+    GOPATH=/tmp/go \
+    PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
 
 ARG KONG_URL=https://github.com/Kong/kong/archive/${KONG_VERSION}.tar.gz
 
@@ -28,8 +30,7 @@ ADD docker-entrypoint.sh /
 
 ARG GOLANG_VERSION=1.13.7
 ARG KONG_GO_PLUGINSERVER_VERSION=master
-ENV GOPATH=/tmp/go
-ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+
 
 RUN yum update -y && yum install -y  gcc  git m4  make  libyaml-devel wget  pcre-devel  patch zlib-devel libtool unzip perl perl-Data-Dumper \
     && curl -fsSLo go.tgz "https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz" \
