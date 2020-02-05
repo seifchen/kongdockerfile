@@ -44,7 +44,7 @@ RUN yum update -y && yum install -y  gcc  git m4  make  libyaml-devel wget  pcre
 	&& cd /tmp/go/src/github.com/kong/go-pluginserver \
     && make build GOARCH=amd64 GOOS=linux \
     && mkdir -p /tmp/build/usr/local/bin/ \
-    && mv go-pluginserver /tmp/build/usr/local/bin/
+    && mv go-pluginserver /tmp/build/usr/local/bin/ \
     && useradd --uid 1337 kong \
     && wget -c  "${SU_EXEC_URL}" -O - | tar -C /tmp -zx  \
     && make -C "/tmp/su-exec-0.2" \
@@ -88,7 +88,7 @@ RUN yum update -y && yum install -y  gcc  git m4  make  libyaml-devel wget  pcre
     && chmod +x /docker-entrypoint.sh  \
     && chmod +x /usr/local/bin/kong \
     && rm -rf /usr/local/openssl/share/doc/* && rm -rf /usr/local/openssl/share/man/* \
-    && rm -fr /var/cache/yum/* /tmp/* /root/.pki 
+    && rm -fr /var/cache/yum/* /tmp/* /root/.pki
 
 
 EXPOSE 8000 8443 8001 8444
