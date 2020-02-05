@@ -32,17 +32,16 @@ ENV GOPATH=/tmp/go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
 RUN set -eux; \
-    && url="https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz"; \
-    && curl -fsSLo go.tgz "$url"; \
-    && tar -C /usr/local -xzf go.tgz; \
-    && rm go.tgz; \
-    && export PATH="$PATH:/usr/local/go/bin"; \
-    && go version; \
+    && url="https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz" \
+    && curl -fsSLo go.tgz "$url" \
+    && tar -C /usr/local -xzf go.tgz \
+    && rm go.tgz \
+    && export PATH="$PATH:/usr/local/go/bin" \
+    && go version \
     && mkdir -p /tmp/go/src/github.com/kong/ \
     && git clone --branch ${KONG_GO_PLUGINSERVER_VERSION} https://github.com/Kong/go-pluginserver.git /tmp/go/src/github.com/kong/go-pluginserver \
     && cd /tmp/go/src/github.com/kong/go-pluginserver \
-    && go mod tidy; \
-    set -eux; \
+    && go mod tidy \
 	&& cd /tmp/go/src/github.com/kong/go-pluginserver \
     && make build GOARCH=$dpkgArch GOOS=linux \
     && mkdir -p /tmp/build/usr/local/bin/ \
