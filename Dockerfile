@@ -31,9 +31,8 @@ ARG KONG_GO_PLUGINSERVER_VERSION=master
 ENV GOPATH=/tmp/go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
-RUN set -eux; \
-    && url="https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz" \
-    && curl -fsSLo go.tgz "$url" \
+RUN set -eux \
+    && curl -fsSLo go.tgz "https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz" \
     && tar -C /usr/local -xzf go.tgz \
     && rm go.tgz \
     && export PATH="$PATH:/usr/local/go/bin" \
