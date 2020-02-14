@@ -45,7 +45,7 @@ RUN yum update -y && yum install -y  gcc  git m4  make  libyaml-devel wget  pcre
 	&& cd /tmp/go/src/github.com/kong/go-pluginserver \
     && make build GOARCH=amd64 GOOS=linux \
     && mkdir -p /tmp/build/usr/local/bin/ \
-    && mv go-pluginserver /tmp/build/usr/local/bin/ \
+    && mv go-pluginserver /usr/local/bin/ \
     && useradd --uid 1337 kong \
     && wget -c  "${SU_EXEC_URL}" -O - | tar -C /tmp -zx  \
     && make -C "/tmp/su-exec-0.2" \
